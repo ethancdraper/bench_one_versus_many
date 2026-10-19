@@ -1,7 +1,7 @@
 input
 	glm_files
-		design.con (D_con) 
-		design.mat (D_mat)
+		design.con (con) 
+		design.mat (mat)
 		subjlist.txt (subjlist)
 	standard
 		MNI152_T1_2mm_brain.nii.gz (MNI)
@@ -35,9 +35,9 @@ output
 				sub-{subject}_ses-preop_T1w_to_MNI_affine.nii.gz (Aff)
 				sub-{subject}_ses-preop_T1w_2_MNI_warp.nii.gz (WARP)
 				sub-{subject}_ses-preop_T1w_2_MNI_nonlin.nii.gz (NONLIN)
-				sub-{subject}_ses-preop_diff_2_MNI.nii.gz (diff2str)
-				sub-{subject}_ses-preop_diff_2_MNI.mat (diff2str_mat)
-				sub-{subject}_ses-preop_diff_2_MNI_warp.nii.gz (D_WARP)
+				sub-{subject}_ses-preop_diff_2_struc.nii.gz (diff2str)
+				sub-{subject}_ses-preop_diff_2_struc.mat (diff2str_mat)
+				sub-{subject}_ses-preop_diff_2_MNI_warp.nii.gz (D2MNI_WARP)
 				sub-{subject}_ses-preop_diff_b0_in_MNI.nii.gz (B0_in_MNI)
 	summary (SUM_all)
 		subj-{subject} (SUM)
