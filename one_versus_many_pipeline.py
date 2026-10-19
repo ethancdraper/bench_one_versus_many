@@ -41,23 +41,23 @@ print("subject:", tree.placeholders.get("subject"))
 pipe = Pipeline()
 
 @pipe
-def preproc1(T1w: In, T1w_brain: Out, T1w_brain_mask: Out):
+def extract_T1wbrain(T1w: In, T1w_brain: Out, T1w_brain_mask: Out):
     """Extracting T1"""
     bet(T1w, T1w_brain, mask=T1w_brain_mask)
 
 @pipe
-def avb0(DWI: In, bvals: In, rB0: Out, B0: Out):
+def average_b0(DWI: In, bvals: In, rB0: Out, B0: Out):
     """Averaging B0"""
     select_dwi_vols(DWI, bvals, rB0, approx_bval=0)
     fslmaths(rB0).Tmean().run(B0)
 
 @pipe
-def run_initial_affine(T1w_brain: In, MNI: In, T1_to_MNI_mat: Out, Aff: Out):
+def run_init_aff(T1w_brain: In, MNI: In, T1_to_MNI_mat: Out, Aff: Out):
     """Initializing skull-stripped T1 to MNI brain, 12-dof affine"""
     flirt(T1w_brain, ref=MNI, omat=T1_to_MNI_mat, out=Aff, dof=12, cost="corratio", searchrx=(-90, 90), searchry=(-90, 90), searchrz=(-90, 90))
 
 @pipe
-def run_nonlinear_registration(T1w:In, MNI_HEAD: In, T1_to_MNI_mat: In, MNI_cnf: In, WARP: Out, NONLIN: Out):
+def run_nonlin_reg(T1w:In, MNI_HEAD: In, T1_to_MNI_mat: In, MNI_cnf: In, WARP: Out, NONLIN: Out):
     """Registering whole brain T1w to MNI, initialised with the affine."""
     fnirt(T1w, ref=MNI_HEAD, aff=T1_to_MNI_mat, config=MNI_cnf, cout=WARP, iout=NONLIN)
 
@@ -68,12 +68,12 @@ def run_diff2standard(B0: In, T1w: In, T1w_brain: In, diff2str: Out, diff2str_ma
     epi_reg(epi=B0, t1=T1w, t1brain=T1w_brain, out=diff2str_prefix)
 
 @pipe
-def conwarp(MNI: In, diff2str_mat: In, WARP: In, D2MNI_WARP: Out):
+def convert_diff2standard(MNI: In, diff2str_mat: In, WARP: In, D2MNI_WARP: Out):
     """Converting to make diff2standard_warp"""
     convertwarp(ref=MNI, premat=diff2str_mat, warp1=WARP, out=D2MNI_WARP)
 
 @pipe
-def b0_to_mni(B0: In, MNI: In, D2MNI_WARP: In, B0_in_MNI: Out):
+def move_b0_to_mni(B0: In, MNI: In, D2MNI_WARP: In, B0_in_MNI: Out):
     """Moving b0 into MNI space"""
     applywarp(B0, ref=MNI, out=B0_in_MNI, warp=D2MNI_WARP, interp="spline")
 
@@ -83,7 +83,7 @@ def select_ss(DWI: In, bvals: In, bvecs: In, b0b1200: Out):
     select_dwi_vols(DWI,bvals, b0b1200, 0, b=1200, obv=bvecs)
 
 @pipe
-def diff_summary(b0b1200: In, b0b1200_bvec: In, b0b1200_bval: In, WM_common: In, D2MNI_WARP: In, SUM: Out):
+def run_diff_summary(b0b1200: In, b0b1200_bvec: In, b0b1200_bval: In, WM_common: In, D2MNI_WARP: In, SUM: Out):
     """Running BENCH summary metric extraction."""
     cmd = ["bench", "diff-summary", "--data", str(b0b1200), "--bvecs", str(b0b1200_bvec), "--bvals", str(b0b1200_bval), "--mask", str(WM_common), "--xfm", str(D2MNI_WARP), "--summarytype", "dt", "--output", str(SUM)]
     print(" ".join(cmd))
