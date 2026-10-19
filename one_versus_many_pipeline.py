@@ -42,7 +42,7 @@ pipe = Pipeline()
 
 @pipe
 def preproc1(T1w: In, T1w_brain: Out, T1w_brain_mask: Out):
-    """BET T1"""
+    """Extracting T1"""
     bet(T1w, T1w_brain, mask=T1w_brain_mask)
 
 @pipe
@@ -52,23 +52,18 @@ def avb0(DWI: In, bvals: In, rB0: Out, B0: Out):
     fslmaths(rB0).Tmean().run(B0)
 
 @pipe
-def betb0(B0: In, B0_brain: Out, B0_brain_mask: Out):
-    """Brain extract B0 for running KURTFIT"""
-    bet(B0, B0_brain, mask=B0_brain_mask)
-
-@pipe
 def run_initial_affine(T1w_brain: In, MNI: In, T1_to_MNI_mat: Out, Aff: Out):
-    """FLIRT 12-dof affine, skull-stripped T1 -> MNI brain."""
+    """Initializing skull-stripped T1 to MNI brain, 12-dof affine"""
     flirt(T1w_brain, ref=MNI, omat=T1_to_MNI_mat, out=Aff, dof=12, cost="corratio", searchrx=(-90, 90), searchry=(-90, 90), searchrz=(-90, 90))
 
 @pipe
 def run_nonlinear_registration(T1w:In, MNI_HEAD: In, T1_to_MNI_mat: In, MNI_cnf: In, WARP: Out, NONLIN: Out):
-    """FNIRT, T1 2 MNI, initialised with the affine."""
+    """Registering whole brain T1w to MNI, initialised with the affine."""
     fnirt(T1w, ref=MNI_HEAD, aff=T1_to_MNI_mat, config=MNI_cnf, cout=WARP, iout=NONLIN)
 
 @pipe
 def run_diff2standard(B0: In, T1w: In, T1w_brain: In, diff2str: Out, diff2str_mat: Out):
-    """Diffusion 2 MNI warp."""
+    """Generating diffusion to T1w warp"""
     diff2str_prefix = str(diff2str).removesuffix(".nii.gz")
     epi_reg(epi=B0, t1=T1w, t1brain=T1w_brain, out=diff2str_prefix)
 
@@ -79,24 +74,8 @@ def conwarp(MNI: In, diff2str_mat: In, WARP: In, D_WARP: Out):
 
 @pipe
 def b0_to_mni(B0: In, MNI: In, D_WARP: In, B0_in_MNI: Out):
-    """Mean b0 into MNI space"""
+    """Moving b0 into MNI space"""
     applywarp(B0, ref=MNI, out=B0_in_MNI, warp=D_WARP, interp="spline")
-
-@pipe 
-def fwdti(DWI: In, bvals: In, bvecs: In, B0_brain_mask: In, KURT: Out):
-    """KURT is the expected RMSE output file."""
-    out_prefix = str(KURT).removesuffix("_rmse.nii.gz")
-    cmd = [
-        KURTFIT,
-        "-o", out_prefix,
-        "-k", str(DWI),
-        "-m", str(B0_brain_mask),
-        "-b", str(bvals),
-        "-r", str(bvecs),
-        "--model", "dti-kurt",
-        "-f",
-    ]
-    subprocess.run(cmd, check=True)
 
 @pipe
 def select_ss(DWI: In, bvals: In, bvecs: In, b0b1200: Out):
