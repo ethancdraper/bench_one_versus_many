@@ -99,13 +99,7 @@ def run_glm(SUM_all: In, WM_common: In, mat: In, con: In, subjlist: In, GLM: Out
 @pipe
 def run_inference(SS_model: In, GLM: In, WM_common: In, Results: Out):
     """Running BENCH inference."""
-    cmd = [
-        "bench", "inference",
-        "--changemodel", str(SS_model),
-        "--glmdir", str(GLM),
-        "--mask", str(WM_common),
-        "--output", str(Results),
-    ]
+    cmd = ["bench", "inference", "--changemodel", str(SS_model), "--glmdir", str(GLM), "--mask", str(WM_common), "--output", str(Results)]
     print("Running:", " ".join(cmd))
 
     for name, path in [
